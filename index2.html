@@ -5,49 +5,791 @@
 
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0,
-                   user-scalable=no">
+                   maximum-scale=1.0, user-scalable=no">
 
-    <title>Candy AR</title>
+    <title>Candy AR | Industrial Intelligence</title>
 
     <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
 
     <!-- AR.js -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.7/aframe/build/aframe-ar.js"></script>
+
+    <style>
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #000;
+        }
+
+        /* ==============================
+           ENTERPRISE TOP HUD
+        ============================== */
+
+        #enterpriseHUD {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .topbar {
+            margin: 14px;
+            padding: 12px 16px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(5, 15, 25, 0.92),
+                    rgba(0, 80, 120, 0.65)
+                );
+
+            border: 1px solid rgba(0, 220, 255, 0.5);
+            border-radius: 10px;
+
+            box-shadow:
+                0 0 20px rgba(0, 200, 255, 0.15),
+                inset 0 0 20px rgba(0, 180, 255, 0.05);
+
+            backdrop-filter: blur(10px);
+        }
+
+        .brand {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            margin-top: 3px;
+            font-size: 9px;
+            opacity: 0.65;
+            letter-spacing: 1.5px;
+        }
+
+        .system-online {
+            font-size: 11px;
+            font-weight: bold;
+            color: #62ffb0;
+
+            padding: 6px 10px;
+
+            border: 1px solid rgba(80, 255, 160, 0.5);
+            border-radius: 20px;
+
+            background: rgba(0, 255, 120, 0.08);
+        }
+
+        .pulse-dot {
+            display: inline-block;
+
+            width: 7px;
+            height: 7px;
+
+            margin-right: 6px;
+
+            border-radius: 50%;
+            background: #42ff9b;
+
+            box-shadow: 0 0 10px #42ff9b;
+
+            animation: pulse 1.4s infinite;
+        }
+
+        @keyframes pulse {
+            0%   { opacity: .35; transform: scale(.8); }
+            50%  { opacity: 1;   transform: scale(1.25); }
+            100% { opacity: .35; transform: scale(.8); }
+        }
+
+        /* ==============================
+           SCANNING UI
+        ============================== */
+
+        #scannerText {
+            position: fixed;
+            bottom: 34px;
+            width: 100%;
+            z-index: 9999;
+
+            text-align: center;
+            color: white;
+
+            pointer-events: none;
+        }
+
+        .scanner-main {
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .scanner-sub {
+            margin-top: 5px;
+
+            font-size: 10px;
+            opacity: .55;
+        }
+
+        #scanLine {
+            position: fixed;
+
+            left: 15%;
+            top: 50%;
+
+            width: 70%;
+            height: 1px;
+
+            z-index: 9998;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    #00eaff,
+                    transparent
+                );
+
+            box-shadow: 0 0 15px #00eaff;
+
+            animation: scanning 3s infinite ease-in-out;
+
+            pointer-events: none;
+        }
+
+        @keyframes scanning {
+            0%   { top: 30%; opacity: .15; }
+            50%  { top: 70%; opacity: 1; }
+            100% { top: 30%; opacity: .15; }
+        }
+
+        /* Corner targeting */
+
+        .corner {
+            position: fixed;
+
+            width: 45px;
+            height: 45px;
+
+            z-index: 9998;
+
+            pointer-events: none;
+        }
+
+        .tl {
+            top: 24%;
+            left: 10%;
+
+            border-top: 2px solid #00eaff;
+            border-left: 2px solid #00eaff;
+        }
+
+        .tr {
+            top: 24%;
+            right: 10%;
+
+            border-top: 2px solid #00eaff;
+            border-right: 2px solid #00eaff;
+        }
+
+        .bl {
+            bottom: 24%;
+            left: 10%;
+
+            border-bottom: 2px solid #00eaff;
+            border-left: 2px solid #00eaff;
+        }
+
+        .br {
+            bottom: 24%;
+            right: 10%;
+
+            border-bottom: 2px solid #00eaff;
+            border-right: 2px solid #00eaff;
+        }
+    </style>
 </head>
 
-<body style="margin: 0; overflow: hidden;">
+<body>
 
-    <a-scene
-        embedded
-        vr-mode-ui="enabled: false"
-        arjs="sourceType: webcam; debugUIEnabled: false;">
+<!-- ==========================================================
+     ENTERPRISE CAMERA HUD
+========================================================== -->
 
-        <!-- Hiro-Marker -->
-        <a-marker preset="hiro">
+<div id="enterpriseHUD">
 
-            <!-- Testobjekt -->
-            <a-box
-                position="0 0.5 0"
-                rotation="0 0 0"
-                color="#00AAFF">
-            </a-box>
+    <div class="topbar">
 
-            <!-- Sensorwert -->
-            <a-text
-                value="CANDY AR\nTemperatur: 42.6 C\nDruck: 5.8 bar\nStatus: OK"
-                position="-1 1.5 0"
-                rotation="-90 0 0"
-                color="white"
-                width="3">
-            </a-text>
+        <div>
+            <div class="brand">
+                CANDY<span style="color:#00eaff">AR</span>
+            </div>
 
-        </a-marker>
+            <div class="subtitle">
+                INDUSTRIAL INTELLIGENCE PLATFORM
+            </div>
+        </div>
 
-        <!-- Smartphone-Kamera -->
-        <a-entity camera></a-entity>
+        <div class="system-online">
+            <span class="pulse-dot"></span>
+            SYSTEM ONLINE
+        </div>
 
-    </a-scene>
+    </div>
+
+</div>
+
+
+<div id="scanLine"></div>
+
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+
+<div id="scannerText">
+
+    <div class="scanner-main">
+        CPS MARKER SCAN
+    </div>
+
+    <div class="scanner-sub">
+        Anlage fokussieren
+    </div>
+
+</div>
+
+
+<!-- ==========================================================
+     AR SCENE
+========================================================== -->
+
+<a-scene
+    embedded
+
+    renderer="
+        logarithmicDepthBuffer: true;
+        precision: medium;
+        antialias: true;
+        alpha: true;
+    "
+
+    vr-mode-ui="enabled: false"
+
+    arjs="
+        sourceType: webcam;
+        debugUIEnabled: false;
+        detectionMode: mono;
+        maxDetectionRate: 60;
+    ">
+
+
+    <!-- ======================================================
+         HIRO MARKER
+    ======================================================= -->
+
+    <a-marker
+        id="machineMarker"
+        preset="hiro"
+        smooth="true"
+        smoothCount="10"
+        smoothTolerance="0.01"
+        smoothThreshold="5">
+
+
+        <!-- ==================================================
+             BASE PLATFORM
+        =================================================== -->
+
+        <a-cylinder
+            position="0 0.04 0"
+            radius="1.05"
+            height="0.04"
+
+            material="
+                color: #04131d;
+                opacity: 0.82;
+                transparent: true;
+                metalness: 0.8;
+                roughness: 0.25;
+            ">
+        </a-cylinder>
+
+
+        <!-- glowing platform ring -->
+
+        <a-torus
+            position="0 0.075 0"
+
+            radius="0.91"
+            radius-tubular="0.008"
+
+            rotation="90 0 0"
+
+            material="
+                color: #00eaff;
+                emissive: #00eaff;
+                emissiveIntensity: 1;
+            ">
+        </a-torus>
+
+
+        <!-- ==================================================
+             MINI PRODUCTION MACHINE
+        =================================================== -->
+
+        <!-- conveyor -->
+
+        <a-box
+            position="0 0.19 0"
+            width="1.15"
+            height="0.11"
+            depth="0.32"
+
+            material="
+                color: #182832;
+                metalness: 0.8;
+                roughness: 0.3;
+            ">
+        </a-box>
+
+
+        <!-- machine left -->
+
+        <a-box
+            position="-0.42 0.43 0"
+            width="0.28"
+            height="0.52"
+            depth="0.42"
+
+            material="
+                color: #263946;
+                metalness: 0.75;
+                roughness: 0.25;
+            ">
+        </a-box>
+
+
+        <!-- machine right -->
+
+        <a-box
+            position="0.42 0.43 0"
+            width="0.28"
+            height="0.52"
+            depth="0.42"
+
+            material="
+                color: #263946;
+                metalness: 0.75;
+                roughness: 0.25;
+            ">
+        </a-box>
+
+
+        <!-- machine center -->
+
+        <a-cylinder
+            position="0 0.47 0"
+            radius="0.20"
+            height="0.48"
+
+            material="
+                color: #667986;
+                metalness: 0.9;
+                roughness: 0.15;
+            ">
+        </a-cylinder>
+
+
+        <!-- rotating machine part -->
+
+        <a-torus
+            position="0 0.74 0"
+            radius="0.24"
+            radius-tubular="0.025"
+            rotation="90 0 0"
+
+            material="
+                color: #00eaff;
+                emissive: #00eaff;
+                emissiveIntensity: 0.8;
+            "
+
+            animation="
+                property: rotation;
+                to: 90 360 0;
+                loop: true;
+                dur: 3500;
+                easing: linear;
+            ">
+        </a-torus>
+
+
+        <!-- ==================================================
+             STATUS BEACON
+        =================================================== -->
+
+        <a-sphere
+            position="0 0.98 0"
+            radius="0.055"
+
+            material="
+                color: #00ff88;
+                emissive: #00ff88;
+                emissiveIntensity: 1;
+            "
+
+            animation="
+                property: scale;
+                dir: alternate;
+                dur: 650;
+                loop: true;
+                to: 1.3 1.3 1.3;
+            ">
+        </a-sphere>
+
+
+        <!-- ==================================================
+             MAIN INFORMATION PANEL
+        =================================================== -->
+
+        <a-plane
+            position="0 1.55 0"
+            width="2.45"
+            height="1.10"
+
+            material="
+                color: #03121c;
+                opacity: 0.91;
+                transparent: true;
+                metalness: 0.25;
+            ">
+        </a-plane>
+
+
+        <!-- cyan header -->
+
+        <a-plane
+            position="0 2.055 0.006"
+            width="2.45"
+            height="0.09"
+
+            material="
+                color: #00dff5;
+                emissive: #00bcd4;
+                emissiveIntensity: 0.45;
+            ">
+        </a-plane>
+
+
+        <a-text
+            value="CPS-i40 // CANDY LINE 01"
+
+            position="-1.10 1.91 0.02"
+
+            color="#FFFFFF"
+
+            width="2.7"
+
+            font="mozillavr">
+        </a-text>
+
+
+        <a-text
+            value="LIVE TELEMETRY"
+
+            position="-1.10 1.76 0.02"
+
+            color="#00E5FF"
+
+            width="1.75">
+        </a-text>
+
+
+        <a-text
+            value="ONLINE"
+
+            position="0.70 1.90 0.02"
+
+            color="#38FF9B"
+
+            width="1.25">
+        </a-text>
+
+
+        <!-- divider -->
+
+        <a-plane
+            position="0 1.67 0.01"
+            width="2.15"
+            height="0.008"
+
+            material="
+                color: #00eaff;
+                opacity: 0.35;
+                transparent: true;
+            ">
+        </a-plane>
+
+
+        <!-- ==================================================
+             SENSOR VALUES
+        =================================================== -->
+
+
+        <!-- TEMPERATURE -->
+
+        <a-text
+            value="TEMPERATUR"
+
+            position="-1.05 1.52 0.02"
+
+            color="#7D96A3"
+
+            width="1.35">
+        </a-text>
+
+        <a-text
+            value="42.6 C"
+
+            position="-1.05 1.35 0.02"
+
+            color="#FFFFFF"
+
+            width="2.0">
+        </a-text>
+
+
+        <!-- PRESSURE -->
+
+        <a-text
+            value="DRUCK"
+
+            position="0.15 1.52 0.02"
+
+            color="#7D96A3"
+
+            width="1.35">
+        </a-text>
+
+        <a-text
+            value="5.8 bar"
+
+            position="0.15 1.35 0.02"
+
+            color="#FFFFFF"
+
+            width="2.0">
+        </a-text>
+
+
+        <!-- RPM -->
+
+        <a-text
+            value="DREHZAHL"
+
+            position="-1.05 1.10 0.02"
+
+            color="#7D96A3"
+
+            width="1.35">
+        </a-text>
+
+        <a-text
+            value="1,420 rpm"
+
+            position="-1.05 0.93 0.02"
+
+            color="#FFFFFF"
+
+            width="2.0">
+        </a-text>
+
+
+        <!-- CURRENT -->
+
+        <a-text
+            value="MOTORSTROM"
+
+            position="0.15 1.10 0.02"
+
+            color="#7D96A3"
+
+            width="1.35">
+        </a-text>
+
+        <a-text
+            value="3.2 A"
+
+            position="0.15 0.93 0.02"
+
+            color="#FFFFFF"
+
+            width="2.0">
+        </a-text>
+
+
+        <!-- ==================================================
+             SECONDARY PRODUCTION PANEL
+        =================================================== -->
+
+        <a-plane
+            position="1.55 0.82 0"
+            rotation="0 -25 0"
+
+            width="1.15"
+            height="1.05"
+
+            material="
+                color: #04141e;
+                opacity: 0.90;
+                transparent: true;
+            ">
+        </a-plane>
+
+
+        <a-text
+            value="PRODUKTION"
+
+            position="1.04 1.18 0.22"
+            rotation="0 -25 0"
+
+            color="#00E5FF"
+
+            width="1.25">
+        </a-text>
+
+
+        <a-text
+            value="DOSEN / MIN"
+
+            position="1.04 0.98 0.22"
+            rotation="0 -25 0"
+
+            color="#849AA5"
+
+            width="0.95">
+        </a-text>
+
+
+        <a-text
+            value="128"
+
+            position="1.04 0.78 0.22"
+            rotation="0 -25 0"
+
+            color="#FFFFFF"
+
+            width="2">
+        </a-text>
+
+
+        <a-text
+            value="EFFIZIENZ"
+
+            position="1.04 0.52 0.22"
+            rotation="0 -25 0"
+
+            color="#849AA5"
+
+            width="0.95">
+        </a-text>
+
+
+        <a-text
+            value="96.4 %"
+
+            position="1.04 0.34 0.22"
+            rotation="0 -25 0"
+
+            color="#38FF9B"
+
+            width="1.5">
+        </a-text>
+
+
+        <!-- ==================================================
+             MACHINE IDENTIFICATION
+        =================================================== -->
+
+        <a-text
+            value="MODULE // CPS-i40-03"
+
+            position="-0.85 0.04 0.65"
+
+            rotation="-90 0 0"
+
+            color="#00E5FF"
+
+            width="1.65">
+        </a-text>
+
+
+    </a-marker>
+
+
+    <!-- CAMERA -->
+
+    <a-entity camera></a-entity>
+
+</a-scene>
+
+
+<!-- ==========================================================
+     MARKER DETECTION
+========================================================== -->
+
+<script>
+
+    const marker = document.querySelector("#machineMarker");
+    const scannerText = document.querySelector("#scannerText");
+    const scanLine = document.querySelector("#scanLine");
+
+    marker.addEventListener("markerFound", () => {
+
+        scannerText.innerHTML = `
+            <div class="scanner-main"
+                 style="color:#58ffac">
+                ✓ CPS-i40 MODUL ERKANNT
+            </div>
+
+            <div class="scanner-sub">
+                Telemetrie erfolgreich geladen
+            </div>
+        `;
+
+        scanLine.style.display = "none";
+    });
+
+
+    marker.addEventListener("markerLost", () => {
+
+        scannerText.innerHTML = `
+            <div class="scanner-main">
+                CPS MARKER SCAN
+            </div>
+
+            <div class="scanner-sub">
+                Anlage fokussieren
+            </div>
+        `;
+
+        scanLine.style.display = "block";
+    });
+
+</script>
 
 </body>
 </html>
